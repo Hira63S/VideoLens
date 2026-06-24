@@ -16,7 +16,7 @@ __pycache__/
 # Large assets
 *.mp4
 *.tgz
-*.jpg
+
 
 # Model weights
 *.pt
