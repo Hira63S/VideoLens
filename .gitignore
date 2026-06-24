@@ -1,0 +1,26 @@
+
+# Generated outputs
+query_results/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Databases
+*.sqlite3
+*.bin
+
+# Large assets
+*.mp4
+*.tgz
+*.jpg
+
+# Model weights
+*.pt
+
+# OS files
+.DS_Store
+Thumbs.db
