@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument("--clip_model", type=str, default="ViT-L-14", help="CLIP model to use for embeddings.")
     parser.add_argument("--batch_size", type=int, default=4, help="Batch size for processing frames.")
     parser.add_argument("--n_results", type=int, default=5)
-    args = parser.parse_args()
+    args = parser.parse_args([])
     return args
 
 
