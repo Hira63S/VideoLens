@@ -1,7 +1,7 @@
 # api.py
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from src.query import search_videos
+from query import search_videos
 
 app = FastAPI(
     title="VideoLens",
@@ -12,11 +12,11 @@ app = FastAPI(
 class SearchRequest(BaseModel):
     query: str
     n_results: int = 5
-
+    video: bool = False
 @app.post("/search")
 def search(request: SearchRequest):
     try:
-        results = search_videos(request.query, request.n_results)
+        results = search_videos(request.query, request.n_results, request.video)
         return {"query": request.query, "results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

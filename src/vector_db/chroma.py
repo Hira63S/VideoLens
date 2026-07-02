@@ -16,7 +16,8 @@ def add_embeddings(collection, ids, embeddings, metadatas):
 def query_embeddings(collection, query_embedding, n_results=5):
     results = collection.query(
         query_embeddings=[query_embedding],
-        n_results=n_results
+        n_results=n_results,
+        include=["metadatas", "distances"]
     )
     return results
 
