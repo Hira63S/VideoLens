@@ -1,0 +1,11 @@
+# configs/default.yaml
+dataroot: /mnt/i/nuScenes-panoptic-v1.0-all
+version: v1.0-mini
+max_samples: 400
+batch_size: 8
+flow_threshold: 6.0
+model_size: c
+chroma_path: ./chroma_db
+db_name: video_frames
+n_results: 5
+video: false
