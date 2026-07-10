@@ -31,4 +31,4 @@ Thumbs.db
 .env
 
 # ChromaDB
-chroma_db/
+chroma_db/configs/exp*.yaml
