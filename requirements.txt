@@ -1,0 +1,29 @@
+# Core ML
+torch
+torchvision
+ultralytics
+open-clip-torch
+supervision
+
+# Tracking
+boxmot
+
+# Data
+nuscenes-devkit
+pyquaternion
+numpy
+Pillow
+opencv-python
+
+# Vector DB
+chromadb
+
+# API
+fastapi
+uvicorn
+
+# Config
+pyyaml
+
+# Utilities
+rich
