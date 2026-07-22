@@ -1,0 +1,21 @@
+# docker-compose.yml
+services:
+  videolens:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - /mnt/i/nuScenes-panoptic-v1.0-all:/data
+      - ./yolov9c.pt:/weights/yolov9c.pt
+      - ./chroma_db:/chroma_db
+      - ./query_results:/query_results
+      - ./configs:/app/configs
+    environment:
+      - CONFIG_PATH=configs/example.yaml
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

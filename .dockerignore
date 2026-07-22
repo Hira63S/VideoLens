@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.git/
+chroma_db/
+query_results/
+*.pt
+*.mp4
+.vscode/
+configs/exp*.yaml
