@@ -7,11 +7,11 @@ services:
     volumes:
       - /mnt/i/nuScenes-panoptic-v1.0-all:/data
       - ./yolov9c.pt:/weights/yolov9c.pt
-      - ./chroma_db:/chroma_db
+      - /mnt/c/Users/cathx/repos/NeuroCortex/chroma_db:/chroma_db
       - ./query_results:/query_results
       - ./configs:/app/configs
     environment:
-      - CONFIG_PATH=configs/example.yaml
+      - CONFIG_PATH=configs/docker.yaml
     deploy:
       resources:
         reservations:

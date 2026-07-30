@@ -1,11 +1,12 @@
 # Dockerfile
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+FROM pytorch/pytorch:2.13.0-cuda12.6-cudnn9-devel
 
 WORKDIR /app
 
 # system dependencies for OpenCV
+
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
@@ -15,8 +16,7 @@ RUN apt-get update && apt-get install -y \
 
 # install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
+RUN python -m pip install --no-cache-dir --break-system-packages -r requirements.txt
 # copy project code
 COPY src/ ./src/
 COPY configs/ ./configs/
