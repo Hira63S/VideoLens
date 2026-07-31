@@ -5,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - /mnt/i/nuScenes-panoptic-v1.0-all:/data
+      - /mnt/i/nuScenes-panoptic-v1.0-all:/mnt/i/nuScenes-panoptic-v1.0-all
       - ./yolov9c.pt:/weights/yolov9c.pt
       - /mnt/c/Users/cathx/repos/NeuroCortex/chroma_db:/chroma_db
       - ./query_results:/query_results
