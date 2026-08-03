@@ -1,18 +1,19 @@
 # VideoLens — Semantic Video Search Pipeline
 
+This is a prototype of a video retrieval software built for small businesses. 
+The issue of having to go through hours of security footage to find 
+a certain event is tedious and time consuming. 
+The solution:
 A multi-model video understanding pipeline that lets you search through hours of
 camera footage using plain English — built for the kind of problem that happens in
 real businesses: *"Show me everything from Wednesday night near the entrance"* or
 *"Find any frames with a person near a vehicle after dark."*
-
-The immediate motivation: my family owns gas stations and convenience stores. When
-an incident happens — a robbery, a disputed transaction, a slip-and-fall — reviewing
-footage means scrubbing through hours of video manually, camera by camera. VideoLens
-turns that into a search problem. You describe what you're looking for, and the
+You describe what you're looking for, and the
 system retrieves the most relevant frames ranked by visual similarity, then extracts
 a video clip centered on each match.
 
-Built on **nuScenes** (autonomous vehicle sensor data) as the development dataset
+This specific repo replaces the real-world application built on security footage with
+the **nuScenes** (autonomous vehicle sensor data) as the development dataset
 because it provides real multi-camera footage with rich metadata — the same pipeline
 applies directly to any multi-camera environment.
 
