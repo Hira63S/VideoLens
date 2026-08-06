@@ -101,11 +101,17 @@ def pipeline_test(args):
                         for d, tid in zip(frame_det.detections, tracked.tracker_id)
                     ]
                 })
+
             count = 0
             batch = []
             batch_indices = []
             batch_timestamps = []
             batch_image_paths = []
+        
+    with open("output.json", "w") as f:
+        json.dump(all_frames, f, indent=2)
+    print(f"Saved {len(all_frames)} frame detections to output.json")
+    
     end_time = time.time()
     print(f"Pipeline test completed in {end_time - start_time:.2f} seconds")
 

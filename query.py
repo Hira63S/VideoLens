@@ -7,7 +7,7 @@ import cv2
 from pathlib import Path 
 from PIL import Image
 import yaml
-
+import json
 
 _model = None
 _tokenizer = None
@@ -55,6 +55,13 @@ def search_videos(query, n_results, video=False):
             break
 
     # save the found videos:
+
+    if os.path.exists("output.json"):
+        with open("output.json") as det_file:
+            all_detections = {d["frame_idx"]: d for d in json.load(det_file)}
+    else:
+        all_detections = {}
+        
     save_dir = "query_results"
     os.makedirs(save_dir, exist_ok=True)
     # image_path:
@@ -77,6 +84,13 @@ def search_videos(query, n_results, video=False):
             result = build_video_clip(meta["image_path"], meta["scene"], os.path.join(save_dir, f"video{k}.mp4"),
                                       scene_frame_paths=scene_frame_paths,)
             print(f"  clip result: {result}")
+        
+        if os.path.exists("output.json"):
+            with open("output.json") as f:
+                all_detections = {f["frame_idx"]: f for f in json.load(f)}
+        else:
+            all_detections = {}
+
     return [
         {
             "id": id_,
@@ -85,6 +99,7 @@ def search_videos(query, n_results, video=False):
             "frame_idx": meta["frame_idx"],
             "image_path": meta["image_path"],
             "timestamp": meta.get("timestamp"),
+            "detections": all_detections.get(meta["frame_idx"], {}).get("detections", []),
         }
         for id_, meta, distance in zip(
             dup_ids, dupe_metas, dupe_distance
