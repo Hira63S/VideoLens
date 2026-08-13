@@ -15,11 +15,16 @@ from src.args import parse_args
 from trackers import ByteTrackTracker
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-args = parse_args()
 
-def pipeline_test(args):
-    print(f"dataroot: {args.dataroot}")
-    print(f"version: {args.version}")
+
+# def pipeline_test(args):
+#     print(f"max_samples: {args.max_samples}")
+#     print(f"config: {args.config}")
+
+# def pipeline_test(args):
+#     print(f"dataroot: {args.dataroot}")
+#     print(f"version: {args.version}")
+
 def pipeline_test(args):
 
     nuscenes = NuScenesLoader(dataroot=args.dataroot, version=args.version, max_samples=args.max_samples)
@@ -93,14 +98,15 @@ def pipeline_test(args):
 
 
                 all_frames.append({
-                    "frame_idx": frame_det.frame_idx,
-                    "timestamp": frame_det.timestamp_sec,
-                    "detections": [
-                        {"class": d.class_name, "confidence": d.confidence,
-                        "track_id": int(tid), "bbox": d.bbox_xyxy}
-                        for d, tid in zip(frame_det.detections, tracked.tracker_id)
-                    ]
-                })
+                "frame_idx": frame_det.frame_idx,
+                "image_path": str(batch_image_paths[batch_indices.index(frame_det.frame_idx)]) if frame_det.frame_idx in batch_indices else "",
+                "timestamp": frame_det.timestamp_sec,
+                "detections": [
+                    {"class": d.class_name, "confidence": float(d.confidence),
+                    "track_id": int(tid), "bbox": [float(x) for x in d.bbox_xyxy]}
+                    for d, tid in zip(frame_det.detections, tracked.tracker_id)
+                ]
+            })
 
             count = 0
             batch = []
@@ -111,9 +117,10 @@ def pipeline_test(args):
     with open("output.json", "w") as f:
         json.dump(all_frames, f, indent=2)
     print(f"Saved {len(all_frames)} frame detections to output.json")
-    
+
     end_time = time.time()
     print(f"Pipeline test completed in {end_time - start_time:.2f} seconds")
 
 if __name__ == "__main__":
+    args = parse_args()  # ← move it here
     pipeline_test(args)

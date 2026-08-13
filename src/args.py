@@ -35,6 +35,7 @@ def parse_args():
         for key, value in config.items():
             if key not in cli_passed and hasattr(args, key):
                 setattr(args, key, value)
+        print(f"DEBUG after yaml load: max_samples={args.max_samples}")  # ← add this
     return args
 
 

@@ -58,10 +58,10 @@ def search_videos(query, n_results, video=False):
 
     if os.path.exists("output.json"):
         with open("output.json") as det_file:
-            all_detections = {d["frame_idx"]: d for d in json.load(det_file)}
+            all_detections = {d["image_path"]: d for d in json.load(det_file)}
     else:
         all_detections = {}
-        
+
     save_dir = "query_results"
     os.makedirs(save_dir, exist_ok=True)
     # image_path:
@@ -85,12 +85,6 @@ def search_videos(query, n_results, video=False):
                                       scene_frame_paths=scene_frame_paths,)
             print(f"  clip result: {result}")
         
-        if os.path.exists("output.json"):
-            with open("output.json") as f:
-                all_detections = {f["frame_idx"]: f for f in json.load(f)}
-        else:
-            all_detections = {}
-
     return [
         {
             "id": id_,
@@ -99,7 +93,7 @@ def search_videos(query, n_results, video=False):
             "frame_idx": meta["frame_idx"],
             "image_path": meta["image_path"],
             "timestamp": meta.get("timestamp"),
-            "detections": all_detections.get(meta["frame_idx"], {}).get("detections", []),
+            "detections": all_detections.get(meta["image_path"], {}).get("detections", []),
         }
         for id_, meta, distance in zip(
             dup_ids, dupe_metas, dupe_distance
