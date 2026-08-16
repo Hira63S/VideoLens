@@ -60,13 +60,13 @@ def run_agent(
         print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Scanning...")
 
         all_flagged = []
-
+        clip_path = None
         for prompt in prompts:
             print(f"  Query: '{prompt}'")
             try:
                 results = search_videos(prompt, n_results=n_results, video=False)
                 scored = score_results(results, clip_threshold=1.4)
-
+                scored = scored[:3]
                 for anomaly in scored:
                     if anomaly.triggered and anomaly.anomaly_score >= anomaly_threshold:
                         print(f"  [!] ANOMALY DETECTED — score={anomaly.anomaly_score}")
@@ -74,7 +74,6 @@ def run_agent(
                         print(f"      Reasons: {anomaly.reasons}")
 
                         # extract video clip
-                        clip_path = None
                         if video:
                             clip_path = str(Path(save_dir) / f"alert_{anomaly.scene}_{anomaly.frame_idx}.mp4")
                             build_video_clip(
@@ -86,13 +85,15 @@ def run_agent(
                             )
 
                         # send alert
-                        send_alert(anomaly, clip_path=clip_path)
-                        log_alert(anomaly, log_path=str(Path(save_dir) / "agent_log.json"))
                         all_flagged.append(anomaly)
 
             except Exception as e:
                 print(f"  [error] {prompt}: {e}")
 
+        if all_flagged:
+            best = max(all_flagged, key=lambda a:a.anomaly_score)
+            send_alert(best, clip_path=clip_path)
+            log_alert(best, log_path=str(Path(save_dir) / "agent_log.json"))
         print(f"\n  Scan complete — {len(all_flagged)} anomalies flagged")
 
         if not continuous:
