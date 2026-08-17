@@ -21,21 +21,22 @@ applies directly to any multi-camera environment.
 
 ## What It Does
 
-Given a set of camera frames, the pipeline:
-
-1. Filters redundant frames using optical flow (skips near-duplicate frames before they hit the GPU)
-2. Detects and classifies objects with YOLOv9 (people, vehicles, bags, etc.)
-3. Tracks objects persistently across frames with ByteTrack
-4. Encodes each frame's visual content with CLIP
-5. Indexes frames in ChromaDB for natural language search
-
-Then, when something happens:
-
+**Search mode** — query footage in plain English:
 ```
-Query: "person near entrance at night"
-  → returns ranked frames with similarity scores, deduplicated by scene
-  → saves matched frames to query_results/
-  → optionally extracts video clips centered on each match (--video flag)
+"person near entrance at night"
+  → ranked frames, deduplicated by scene
+  → matched frame images saved
+  → video clips extracted centered on each match
+```
+
+**Agent mode** — autonomous monitoring:
+```
+Agent scans indexed frames every N seconds
+  → CLIP matches frames to suspicious activity prompts
+  → YOLO confirms detections, ByteTrack checks persistence
+  → anomaly scored across 3 rules
+  → if triggered: email alert sent with frame + video clip attached
+  → all anomalies logged to agent_log.json
 ```
 
 Also exposed as a **FastAPI service** — query via HTTP with optional video output.
@@ -50,8 +51,7 @@ Raw Video Frames (nuScenes CAM_FRONT, 10 scenes, ~380 frames)
         ▼
 ┌──────────────────────────────┐
 │   Frame Sampler               │  Optical flow (Farneback) — skips frames
-│   (Optical Flow)              │  below motion threshold; reduces redundant
-└────────────┬──────────────────┘  GPU work on near-duplicate frames
+│   (Optical Flow)              │  below motion threshold; 
              │
              ▼
 ┌──────────────────────────────────────────┐
@@ -69,23 +69,16 @@ Raw Video Frames (nuScenes CAM_FRONT, 10 scenes, ~380 frames)
              ▼
 ┌──────────────────┐    ┌────────────────────────────────┐
 │   output.json     │    │   ChromaDB                      │
-│   detections +    │    │   CLIP embeddings + frame paths  │
-│   track IDs       │    └────────────┬───────────────────┘
+│   YOLO detections │    │   CLIP embeddings + metadata    │
+│   + track IDs     │    └────────────┬───────────────────┘
 └──────────────────┘                  │
                                       ▼
-                       ┌──────────────────────────────────┐
-                       │  Natural Language Query            │
-                       │  "person near vehicle"             │
-                       │  → ranked frames, deduped by scene │
-                       └────────────┬─────────────────────┘
-                                    │
-                                    ▼
-                       ┌──────────────────────────────────┐
-                       │  Output                            │
-                       │  • Saved frames (query_results/)   │
-                       │  • Video clips per matched scene   │
-                       │  • results.json with scores        │
-                       └──────────────────────────────────┘
+                    ┌─────────────────────────────────────┐
+                    │  Query / Agent                        │
+                    │                                       │
+                    │  Search: text → CLIP → ranked frames  │
+                    │  Agent:  prompts → score → alert      │
+                    └─────────────────────────────────────┘
 ```
 
 Two complementary outputs from the same frames: **structured detections**
@@ -95,29 +88,51 @@ YOLO detected in that frame, confidence is high.
 
 ---
 
-## Real-World Use Case
+**Two complementary outputs cross-validate each other:**
+CLIP retrieves semantically relevant frames. YOLO confirms what's actually in them.
+Unit tests verify this agreement — 17 passing tests including cross-validation.
 
-A convenience store robbery happens Tuesday night. Instead of pulling up each
-camera and scrubbing manually:
+---
 
+**Incident investigation:**
 ```bash
-python query.py --config configs/example.yaml --query "person near entrance at night" --n_results 5 --video
+python query.py --config configs/example.yaml \
+  --query "person near entrance at night" --n_results 5 --video
+```
+
+**Autonomous monitoring:**
+```bash
+python agent.py --config configs/example.yaml --continuous --interval 30
 ```
 
 Output:
 ```
-query_results/
-  n015-...__CAM_FRONT__....jpg    ← matched frame, scene-0061
-  n015-...__CAM_FRONT__....jpg    ← matched frame, scene-0553
-  video0.mp4                       ← 20-frame clip centered on match
-  video1.mp4
-  results.json                     ← ranked matches with scores + timestamps
+agent_results/
+  alert_scene-1094_112.mp4    ← video clip of flagged moment
+  agent_log.json              ← full audit trail
 ```
-
-Each clip is scene-isolated — frames are pulled only from the matched scene's
-recording session, not stitched across unrelated footage.
+Owner receives email with matched frame + video clip attached.
 
 ---
+## Anomaly Detection
+
+The agent scores each frame across three rules:
+
+| Rule | Signal | Score |
+|---|---|---|
+| CLIP semantic match | Distance below threshold | +0.4 |
+| Person detected | YOLO detects person/pedestrian | +0.3 |
+| Persistent tracking | ByteTrack confirms N+ tracks | +0.3 |
+
+Anomaly prompts are plain English — no retraining needed:
+```python
+SUSPICIOUS_PROMPTS = [
+    "person loitering near entrance",
+    "person concealing object",
+    "person acting suspiciously near shelves",
+    "person running inside store",
+]
+```
 
 ## Dataset
 
@@ -234,20 +249,77 @@ See `configs/example.yaml` for a full reference. CLI flags override YAML values.
 python query.py --config configs/myconfig.yaml --n_results 10
 ```
 
+
+---
+
+## Email Alerts
+
+```bash
+export ALERT_SENDER_EMAIL=your@gmail.com
+export ALERT_SENDER_PASSWORD=your_app_password  # Gmail App Password
+export ALERT_RECIPIENT_EMAIL=owner@gmail.com
+python agent.py --config configs/myconfig.yaml --continuous
+```
+
+---
+
+## API
+
+```
+POST /search
+  { "query": "string", "n_results": 5, "video": false }
+  → ranked results with YOLO detections included
+
+GET /health
+  → { "status": "healthy" }
+```
+
+Swagger UI at `http://localhost:8000/docs`
+
+---
+
+## Project Structure
+
+```
+VideoLens/
+  pipeline.py          ← indexing: CLIP + YOLO + ByteTrack
+  query.py             ← semantic search + video extraction
+  agent.py             ← autonomous monitoring loop
+  postprocess.py       ← clip extraction + incident reports
+  src/
+    agents/
+      anomaly.py       ← anomaly scoring logic
+      alerts.py        ← email alerts + logging
+    api/api.py         ← FastAPI service
+    encoder/           ← CLIP
+    models/            ← YOLO
+    vector_db/         ← ChromaDB
+    dataloader/        ← nuScenes
+    pipeline/          ← frame sampler
+  tests/
+    test_query.py
+    test_anomaly.py
+    test_cross_validation.py
+  configs/
+    example.yaml
+  Dockerfile
+  docker-compose.yml
+```
+
 ---
 
 ## What I'd Improve With More Time
 
-- Run YOLO and CLIP concurrently using CUDA streams instead of sequentially
-- Automate precision@5 evaluation against a hand-labeled query set
-- Fine-tune YOLOv9 on sparse classes (e.g. bags, cyclists) and measure mAP delta
-- Replace optical flow gating with a lightweight learned frame-redundancy classifier
-- Add timestamp-aware search: filter ChromaDB results by time range before ranking
-- Containerize with Docker for reproducible deployment
+- Fine-tune an action recognition model on shoplifting datasets for higher precision
+- Add timestamp-aware search (filter by time range e.g. "only after 10pm")
+- Multi-camera support (nuScenes has 6 cameras, currently using CAM_FRONT only)
+- Precision@5 automated eval against a hand-labeled query set
+- Deploy to AWS EC2 with the Pi as a camera relay (edge capture + cloud inference)
+- Build a simple web UI for non-technical operators
 
 ---
 
 ## Stack
 
 `PyTorch` · `Ultralytics YOLOv9` · `OpenCLIP` · `ByteTrack` · `ChromaDB` ·
-`nuscenes-devkit` · `OpenCV` · `FastAPI` · `FFmpeg`
+`nuscenes-devkit` · `OpenCV` · `FastAPI` · `Docker` · `pytest`
