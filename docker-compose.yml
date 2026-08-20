@@ -10,6 +10,7 @@ services:
       - /mnt/c/Users/cathx/repos/NeuroCortex/chroma_db:/chroma_db
       - ./query_results:/query_results
       - ./configs:/app/configs
+      - ./output.json:/app/output.json
     environment:
       - CONFIG_PATH=configs/docker.yaml
     deploy:

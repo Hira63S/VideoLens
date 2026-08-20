@@ -32,3 +32,4 @@ Thumbs.db
 
 # ChromaDB
 chroma_db/configs/exp*.yaml
+agent_results/
